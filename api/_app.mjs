@@ -6,7 +6,6 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import bcrypt from "bcryptjs";
-import initSqlJs from "sql.js";
 function resolveDatabasePath(env = process.env) {
   if (env.SQLITE_DB_PATH) {
     return env.SQLITE_DB_PATH;
@@ -26,6 +25,7 @@ async function createSqlJsDatabase() {
     }
   } catch {
   }
+  const { default: initSqlJs } = await import("sql.js");
   const SQL = await initSqlJs(
     wasmBinary ? { wasmBinary } : void 0
   );
@@ -963,8 +963,6 @@ import crypto from "node:crypto";
 import fs2 from "node:fs";
 import path2 from "node:path";
 import jwt from "jsonwebtoken";
-import { initializeApp, getApps } from "firebase-admin/app";
-import { getAuth } from "firebase-admin/auth";
 function loadFirebaseProjectId() {
   if (process.env.FIREBASE_PROJECT_ID) {
     return process.env.FIREBASE_PROJECT_ID;
@@ -980,12 +978,6 @@ function loadFirebaseProjectId() {
   return "gen-lang-client-0946597153";
 }
 var firebaseProjectId = loadFirebaseProjectId();
-if (!getApps().length) {
-  initializeApp({
-    projectId: firebaseProjectId
-  });
-}
-var adminAuth = getAuth();
 var JWT_SECRET = process.env.JWT_SECRET && process.env.JWT_SECRET !== "replace-with-strong-random-32-byte-secret" ? process.env.JWT_SECRET : crypto.createHash("sha256").update(`arena360-${firebaseProjectId}-session`).digest("hex");
 function signSessionToken(user) {
   return jwt.sign({ id: user.id, uid: user.uid, role: user.role }, JWT_SECRET, {
@@ -1001,7 +993,16 @@ function verifySessionToken(token) {
   }
 }
 async function verifyFirebaseToken(idToken) {
-  return adminAuth.verifyIdToken(idToken);
+  const [{ initializeApp, getApps }, { getAuth }] = await Promise.all([
+    import("firebase-admin/app"),
+    import("firebase-admin/auth")
+  ]);
+  if (!getApps().length) {
+    initializeApp({
+      projectId: firebaseProjectId
+    });
+  }
+  return getAuth().verifyIdToken(idToken);
 }
 function getUserById(id) {
   return db.prepare("SELECT id, uid, name, email, phone, role, avatar_url, is_active FROM users WHERE id = ?").get(id);
@@ -2864,10 +2865,14 @@ async function handler(req, res) {
   } catch (err) {
     console.error("[vercel-handler] startup/request error:", err);
     if (!res.headersSent) {
-      res.status(500).json({
-        error: "Serverless function failed",
-        detail: err instanceof Error ? err.message : String(err)
-      });
+      res.statusCode = 500;
+      res.setHeader("Content-Type", "application/json");
+      res.end(
+        JSON.stringify({
+          error: "Serverless function failed",
+          detail: err instanceof Error ? err.message : String(err)
+        })
+      );
     }
   }
 }

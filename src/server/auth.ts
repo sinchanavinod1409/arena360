@@ -3,8 +3,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import { initializeApp, getApps } from 'firebase-admin/app';
-import { getAuth } from 'firebase-admin/auth';
 import { db } from './db.ts';
 import type { UserRole } from './domain.ts';
 
@@ -25,14 +23,6 @@ function loadFirebaseProjectId(): string {
 }
 
 const firebaseProjectId = loadFirebaseProjectId();
-
-if (!getApps().length) {
-  initializeApp({
-    projectId: firebaseProjectId,
-  });
-}
-
-const adminAuth = getAuth();
 
 const JWT_SECRET =
   process.env.JWT_SECRET && process.env.JWT_SECRET !== 'replace-with-strong-random-32-byte-secret'
@@ -70,7 +60,16 @@ export function verifySessionToken(token: string): { id: number; uid: string; ro
 }
 
 export async function verifyFirebaseToken(idToken: string) {
-  return adminAuth.verifyIdToken(idToken);
+  const [{ initializeApp, getApps }, { getAuth }] = await Promise.all([
+    import('firebase-admin/app'),
+    import('firebase-admin/auth'),
+  ]);
+  if (!getApps().length) {
+    initializeApp({
+      projectId: firebaseProjectId,
+    });
+  }
+  return getAuth().verifyIdToken(idToken);
 }
 
 export function getUserById(id: number): SessionUser | undefined {

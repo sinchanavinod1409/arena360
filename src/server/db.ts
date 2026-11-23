@@ -2,7 +2,6 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import bcrypt from 'bcryptjs';
-import initSqlJs from 'sql.js';
 
 export interface DbStatementLike {
   get: (...params: unknown[]) => unknown;
@@ -37,6 +36,7 @@ export async function createSqlJsDatabase(): Promise<DbLike> {
     // Let sql.js resolve wasm automatically if file read fails
   }
 
+  const { default: initSqlJs } = await import('sql.js');
   const SQL = await initSqlJs(
     wasmBinary ? ({ wasmBinary } as Parameters<typeof initSqlJs>[0]) : undefined
   );

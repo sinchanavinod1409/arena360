@@ -20,10 +20,14 @@ export default async function handler(req: Request, res: Response) {
   } catch (err) {
     console.error('[vercel-handler] startup/request error:', err);
     if (!res.headersSent) {
-      res.status(500).json({
-        error: 'Serverless function failed',
-        detail: err instanceof Error ? err.message : String(err),
-      });
+      res.statusCode = 500;
+      res.setHeader('Content-Type', 'application/json');
+      res.end(
+        JSON.stringify({
+          error: 'Serverless function failed',
+          detail: err instanceof Error ? err.message : String(err),
+        })
+      );
     }
   }
 }

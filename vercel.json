@@ -4,8 +4,8 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "functions": {
-    "api/index.mjs": {
-      "includeFiles": "{firebase-applet-config.json,node_modules/sql.js/dist/sql-wasm.wasm}"
+    "api/index.js": {
+      "includeFiles": "{api/_app.mjs,firebase-applet-config.json,node_modules/sql.js/dist/sql-wasm.wasm}"
     }
   },
   "rewrites": [
