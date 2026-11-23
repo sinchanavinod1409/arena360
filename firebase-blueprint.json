@@ -1,0 +1,71 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Authenticated PLAYNEX platform user with role metadata.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "name": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "role": { "type": "string", "enum": ["customer", "trainer", "facility_owner", "admin"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "name", "role", "createdAt"]
+    },
+    "UserPrivate": {
+      "title": "UserPrivate",
+      "description": "Isolated PII record for user email, phone, and preferences.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "email": { "type": "string", "format": "email", "maxLength": 200 },
+        "phone": { "type": "string", "maxLength": 32 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "updatedAt"]
+    },
+    "BookingSummary": {
+      "title": "BookingSummary",
+      "description": "Cloud-mirrored booking confirmation record owned by customer.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "bookingRef": { "type": "string", "maxLength": 40 },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "payment_pending", "confirmed", "cancelled", "rescheduled", "completed", "failed"]
+        },
+        "amount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "bookingRef", "status", "amount", "createdAt"]
+    },
+    "ConnectionCheck": {
+      "title": "ConnectionCheck",
+      "description": "Health check document for Firestore connection verification.",
+      "type": "object",
+      "properties": {
+        "status": { "type": "string", "maxLength": 32 }
+      }
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Public user identity profile without PII."
+    },
+    "/users/{userId}/private/{docId}": {
+      "schema": { "$ref": "#/entities/UserPrivate" },
+      "description": "Private user PII strictly isolated to owner or admin."
+    },
+    "/bookings/{bookingId}": {
+      "schema": { "$ref": "#/entities/BookingSummary" },
+      "description": "Customer booking summary records."
+    },
+    "/test/{docId}": {
+      "schema": { "$ref": "#/entities/ConnectionCheck" },
+      "description": "Read-only connection probe path."
+    }
+  }
+}

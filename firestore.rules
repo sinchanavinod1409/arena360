@@ -1,0 +1,126 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        request.auth.token.email == 'skarthikslv5@gmail.com'
+      );
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'name', 'role', 'createdAt'])
+        && data.keys().hasOnly(['uid', 'name', 'role', 'createdAt'])
+        && data.uid is string && data.uid.size() > 0 && data.uid.size() <= 128
+        && data.uid == request.auth.uid
+        && data.name is string && data.name.size() >= 2 && data.name.size() <= 120
+        && data.role in ['customer', 'trainer', 'facility_owner']
+        && data.createdAt == request.time;
+    }
+
+    function isValidUserPrivate(data) {
+      return data.keys().hasAll(['uid', 'email', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'email', 'phone', 'updatedAt'])
+        && data.uid is string && data.uid == request.auth.uid
+        && data.email is string && data.email.size() >= 3 && data.email.size() <= 200
+        && (!('phone' in data) || (data.phone is string && data.phone.size() <= 32))
+        && data.updatedAt == request.time;
+    }
+
+    function isValidBookingSummary(data) {
+      return data.keys().hasAll(['id', 'userId', 'bookingRef', 'status', 'amount', 'createdAt'])
+        && data.keys().hasOnly(['id', 'userId', 'bookingRef', 'status', 'amount', 'createdAt'])
+        && isValidId(data.id)
+        && data.userId is string && data.userId == request.auth.uid
+        && data.bookingRef is string && data.bookingRef.size() >= 4 && data.bookingRef.size() <= 40
+        && data.status in ['pending', 'payment_pending', 'confirmed', 'cancelled', 'rescheduled', 'completed', 'failed']
+        && data.amount is number && data.amount >= 0 && data.amount <= 1000000
+        && data.createdAt == request.time;
+    }
+
+    // Read-only connection test document
+    match /test/{docId} {
+      allow get: if isValidId(docId);
+      allow list, create, update, delete: if false;
+    }
+
+    // Public user profile (non-PII)
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isValidId(userId) && isOwner(userId) && isValidUser(incoming());
+      allow update: if isValidId(userId) && isSignedIn() && (
+        isAdmin() || (
+          isOwner(userId)
+          && incoming().uid == existing().uid
+          && incoming().role == existing().role
+          && incoming().createdAt == existing().createdAt
+          && incoming().diff(existing()).affectedKeys().hasOnly(['name'])
+          && incoming().name is string && incoming().name.size() >= 2 && incoming().name.size() <= 120
+        )
+      );
+      allow delete: if isAdmin();
+
+      // Strictly isolated PII subcollection
+      match /private/{docId} {
+        allow get: if isValidId(userId) && isValidId(docId) && (isOwner(userId) || isAdmin());
+        allow list: if false;
+        allow create: if isValidId(userId) && isValidId(docId) && isOwner(userId) && isValidUserPrivate(incoming());
+        allow update: if isValidId(userId) && isValidId(docId) && (
+          isAdmin() || (
+            isOwner(userId)
+            && isValidUserPrivate(incoming())
+            && incoming().uid == existing().uid
+            && incoming().diff(existing()).affectedKeys().hasOnly(['email', 'phone', 'updatedAt'])
+          )
+        );
+        allow delete: if isAdmin();
+      }
+    }
+
+    // Customer bookings
+    match /bookings/{bookingId} {
+      allow get: if isValidId(bookingId) && isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isValidId(bookingId) && isSignedIn() && isValidBookingSummary(incoming());
+      allow update: if isValidId(bookingId) && isSignedIn() && (
+        isAdmin() || (
+          existing().userId == request.auth.uid
+          && existing().status in ['pending', 'payment_pending', 'confirmed']
+          && incoming().userId == existing().userId
+          && incoming().bookingRef == existing().bookingRef
+          && incoming().createdAt == existing().createdAt
+          && incoming().amount == existing().amount
+          && incoming().diff(existing()).affectedKeys().hasOnly(['status'])
+          && incoming().status in ['cancelled', 'rescheduled']
+        )
+      );
+      allow delete: if isAdmin();
+    }
+  }
+}

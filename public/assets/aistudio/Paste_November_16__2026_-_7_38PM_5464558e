@@ -1,0 +1,999 @@
+# MASTER DEVELOPMENT PROMPT: SPORTS MANAGEMENT SYSTEM
+## Production-Ready Full-Stack Web Application – Individual SDF Laboratory Assignment
+
+### 1. PROJECT ROLE AND OBJECTIVE
+
+Act as a Senior Full-Stack Software Architect, UI/UX Designer, Database Engineer, QA Engineer, and DevOps Engineer.
+
+Your task is to independently design, develop, test, and prepare a complete, professional-grade Sports Management System (SMS) web application.
+
+This is an individual Software Development Fundamentals (SDF) laboratory assignment. The problem statement and functional requirements are shared among group members, but the GUI design, implementation, and testing must be individually developed.
+
+Build an original, modern, responsive, fully functional web application that implements every requirement specified in this document.
+
+**IMPORTANT:** This project is intended for actual deployment, not merely an academic prototype or static frontend demonstration. Develop it with production-oriented architecture, proper database integration, authentication, authorization, validation, error handling, testing, and deployment configuration.
+
+Do not skip requirements, leave unfinished pages, use non-functional buttons, or substitute actual functionality with decorative UI elements.
+
+---
+
+# 2. REFERENCE MATERIALS – MANDATORY
+
+Use all the uploaded materials as the primary project references:
+
+1. SDF Laboratory Manual PDF.
+2. Sports Management System DFD – Level 0.
+3. Sports Management System DFD – Level 1.
+4. Sports Management System DFD – Level 2.
+5. Sports Management System Activity Diagram.
+6. Sports Management System State Diagram.
+
+Study the diagrams and understand the complete application workflow before implementation.
+
+The system must maintain consistency with the supplied diagrams and functional requirements.
+
+### Important implementation instructions
+
+- Follow the registration and login workflow.
+- Implement sports browsing and facility selection.
+- Implement facility availability checking.
+- Implement date and time-slot selection.
+- Implement booking creation.
+- Implement payment processing.
+- Implement booking confirmation.
+- Implement booking management, cancellation, and rescheduling.
+- Implement trainer search and session booking.
+- Implement profile management and booking history.
+- Implement facility owner, trainer, and administrator functionalities.
+
+The supplied diagrams define the expected system processes. However, the actual GUI must be independently designed with an original visual identity.
+
+Do not simply recreate the appearance of the supplied diagrams.
+
+---
+
+# 3. PROJECT IDENTITY AND DESIGN DIRECTION
+
+Create a professional sports facility booking platform with a unique brand identity.
+
+Suggested application name: **PLAYNEX – Sports & Facility Management Platform**
+
+Create a visually distinctive design suitable for a professional commercial sports booking platform.
+
+### Design philosophy
+
+Use a premium, modern, clean, and athletic visual language.
+
+The interface should communicate:
+- Professionalism
+- Sports and fitness
+- Convenience
+- Reliability
+- Accessibility
+- Trust and security
+
+### UI/UX requirements
+
+1. Create a completely original dashboard layout.
+2. Use a modern sidebar navigation system.
+3. Implement clean typography and consistent spacing.
+4. Use professional sports-related imagery.
+5. Create visually appealing facility cards.
+6. Use intuitive booking calendars and time-slot selectors.
+7. Include interactive charts and dashboard statistics.
+8. Use professional icons.
+9. Implement attractive empty states, loading states, and error states.
+10. Provide meaningful hover effects and micro-interactions.
+11. Maintain consistent design across all pages.
+12. Implement responsive layouts for desktop, tablet, and mobile.
+
+### Suggested visual direction
+
+- Primary: Deep navy / charcoal.
+- Secondary: Electric blue or vibrant green.
+- Background: Light neutral surfaces.
+- Cards: Clean surfaces with subtle borders and shadows.
+- Typography: Modern sans-serif.
+- Buttons: Consistent, accessible, and clearly differentiated.
+
+Avoid generic template-like dashboards and unnecessarily complicated layouts.
+
+The final result must look like an independently designed commercial SaaS product.
+
+---
+
+# 4. TECHNOLOGY STACK
+
+Use a modern, maintainable, deployment-friendly technology stack.
+
+### Frontend
+- Next.js with App Router.
+- React.
+- TypeScript.
+- Tailwind CSS.
+- shadcn/ui or equivalent reusable UI components.
+- Lucide icons.
+- Recharts for dashboard visualizations.
+
+### Backend
+- Next.js server-side functionality and API routes.
+- Supabase backend.
+- PostgreSQL database.
+- Supabase Authentication.
+- Supabase Storage for images and documents.
+
+### Payment Integration
+- Razorpay integration architecture for Indian payment methods.
+- Support UPI, debit cards, and credit cards.
+- Implement test-mode payment processing first.
+- Never store raw card numbers, CVVs, or sensitive payment credentials.
+- Verify payment status on the server using provider verification or webhooks.
+- Do not mark a booking as paid based only on a frontend success message.
+
+### Deployment
+Prepare the application for:
+- Vercel deployment.
+- Supabase production database.
+- Environment-based configuration.
+- GitHub version control.
+- Production build and deployment verification.
+
+If any external credentials are unavailable, create the integration structure with clearly documented configuration instructions and test-mode support. Never pretend an unconfigured external integration is operational.
+
+---
+
+# 5. USER ROLES AND ACCESS CONTROL
+
+Implement four distinct user roles.
+
+### A. Customer
+
+Customers must be able to:
+- Register and log in.
+- Manage personal profiles.
+- Browse sports.
+- Search sports facilities.
+- Filter facilities.
+- View facility information.
+- Check available time slots.
+- Book facilities.
+- Book trainers.
+- Make payments.
+- View booking confirmations.
+- Cancel bookings.
+- Reschedule bookings.
+- View booking history.
+- Submit ratings and reviews.
+- Manage preferences.
+- Receive notifications.
+
+### B. Trainer
+
+Trainers must be able to:
+- Register or access an authorized trainer account.
+- Create and manage trainer profiles.
+- Add experience and certifications.
+- Specify sports expertise.
+- Set session pricing.
+- Manage availability.
+- View upcoming sessions.
+- Accept or manage session bookings.
+- Update session status.
+- View booking history.
+
+### C. Facility Owner
+
+Facility owners must be able to:
+- Add sports facilities.
+- Upload facility images.
+- Specify sports supported.
+- Add descriptions and locations.
+- Set booking prices.
+- Define operating hours.
+- Manage available time slots.
+- View facility bookings.
+- Manage reservations.
+- Update facility information.
+- View facility-related statistics.
+
+### D. Administrator
+
+Administrators must have a dedicated administrative dashboard.
+
+Admin functionalities:
+- Manage registered customers.
+- Manage trainer accounts.
+- Approve or reject trainer profiles.
+- Manage facility owners.
+- Add, update, and remove sports.
+- Manage sports facilities.
+- Monitor all bookings.
+- Monitor payment records.
+- Manage cancellations.
+- Handle reported issues.
+- Moderate reviews.
+- View system analytics.
+- Monitor platform activity.
+
+Implement role-based access control (RBAC) at both the frontend and backend levels.
+
+A customer must never be able to access administrator or facility-owner operations by changing a URL.
+
+---
+
+# 6. COMPLETE FUNCTIONAL REQUIREMENTS
+
+Every requirement below is mandatory.
+
+## FR1 – User Registration and Login
+
+Implement:
+- Customer registration.
+- Login using registered email/mobile and password.
+- Secure authentication.
+- Form validation.
+- Password visibility toggle.
+- Password reset.
+- Logout.
+- Session management.
+- Duplicate account prevention.
+- Appropriate authentication error messages.
+
+Validate user credentials securely.
+
+## FR2 – User Profile Management
+
+Allow customers to:
+- View personal information.
+- Edit name.
+- Update email and phone information.
+- Update contact details.
+- Select preferred sports.
+- Upload profile pictures.
+- Save profile changes.
+
+## FR3 – Sports Browsing
+
+Create a sports discovery section supporting:
+- Cricket.
+- Football.
+- Badminton.
+- Tennis.
+- Basketball.
+- Swimming.
+- Gym/Fitness.
+- Skating.
+- Other sports configurable by administrators.
+
+Each sport should have an individual category card with relevant images and information.
+
+Selecting a sport must display matching facilities and activities.
+
+## FR4 – Facility Search
+
+Implement advanced facility search.
+
+Users must be able to filter facilities based on:
+- Sport type.
+- Location.
+- Price range.
+- Availability.
+
+Display:
+- Facility name.
+- Sports supported.
+- Location.
+- Price.
+- Rating.
+- Images.
+- Facility description.
+- Availability status.
+
+Search and filters must work with actual database data.
+
+## FR5 – Availability Checking
+
+Implement an interactive availability calendar.
+
+Users must be able to:
+- Select a facility.
+- Choose a date.
+- View available slots.
+- View already-booked slots.
+- Identify unavailable slots visually.
+
+Use clear availability indicators.
+
+Prevent users from selecting unavailable slots.
+
+## FR6 – Facility Booking
+
+Implement the complete booking workflow:
+
+1. Select sport.
+2. Select facility.
+3. View facility details.
+4. Select booking date.
+5. Select available time slot.
+6. Review booking information.
+7. Confirm booking.
+8. Proceed to payment.
+9. Generate booking confirmation.
+
+Each booking must have a unique booking reference.
+
+Prevent simultaneous users from booking the same facility and time slot.
+
+Use database-level transaction or constraint-based protection against double bookings.
+
+## FR7 – Booking Management
+
+Customers must be able to:
+- View upcoming bookings.
+- View booking details.
+- Cancel bookings.
+- Reschedule bookings.
+- Check booking status.
+
+Implement cancellation policies and applicable refund status.
+
+Rescheduling must check the availability of the newly selected slot before confirming the change.
+
+## FR8 – Trainer Search and Booking
+
+Create a dedicated trainer discovery module.
+
+Allow users to search trainers based on:
+- Sport.
+- Experience.
+- Rating.
+- Price.
+- Availability.
+
+Display trainer profiles with:
+- Name.
+- Profile image.
+- Sports expertise.
+- Experience.
+- Certifications.
+- Ratings.
+- Session price.
+- Availability.
+
+Allow customers to book training sessions.
+
+Trainer availability must be updated after a confirmed booking.
+
+## FR9 – Online Payment
+
+Implement a secure payment module for:
+- Facility bookings.
+- Trainer sessions.
+
+Supported payment methods:
+- Credit card.
+- Debit card.
+- UPI.
+
+Payment workflow:
+1. Display booking summary.
+2. Display total amount.
+3. Select payment method.
+4. Initiate payment.
+5. Verify payment.
+6. Update booking payment status.
+7. Generate payment receipt.
+
+Handle:
+- Successful payments.
+- Failed payments.
+- Cancelled payments.
+- Payment retries.
+- Duplicate payment requests.
+
+Use Razorpay test mode until production credentials are configured.
+
+## FR10 – Booking Confirmation and Notifications
+
+After a successful booking and verified payment:
+- Generate a booking confirmation.
+- Display booking reference.
+- Show facility/trainer details.
+- Display date and time.
+- Display payment information.
+- Save the booking in the database.
+
+Implement in-app notifications for:
+- Successful booking.
+- Payment status.
+- Upcoming sessions.
+- Cancellation.
+- Rescheduling.
+
+Keep the architecture ready for email/SMS notifications through configurable providers.
+
+## FR11 – Reviews and Ratings
+
+Allow customers to:
+- Rate facilities.
+- Review facilities.
+- Rate trainers.
+- Review trainers.
+- View existing reviews.
+
+Only allow reviews from users with eligible completed bookings or sessions.
+
+Implement rating validation and administrator moderation.
+
+## FR12 – Trainer Management
+
+Provide trainers with a separate dashboard.
+
+Include:
+- Profile management.
+- Experience management.
+- Certification management.
+- Sports expertise.
+- Pricing management.
+- Availability calendar.
+- Upcoming sessions.
+- Booking management.
+- Session history.
+
+## FR13 – Facility Management
+
+Provide facility owners with a separate dashboard.
+
+Include:
+- Add facilities.
+- Edit facility information.
+- Delete facilities where permitted.
+- Upload facility images.
+- Set prices.
+- Configure operating hours.
+- Manage time slots.
+- View upcoming bookings.
+- Monitor facility availability.
+
+## FR14 – Administrator Management
+
+Build a complete admin dashboard.
+
+Include:
+- Customer management.
+- Trainer management.
+- Facility management.
+- Sports category management.
+- Booking management.
+- Payment management.
+- Reported issue management.
+- Review moderation.
+- Platform analytics.
+
+Implement appropriate confirmation dialogs for sensitive administrative actions.
+
+## FR15 – Booking History
+
+Maintain complete historical records of:
+- Previous facility bookings.
+- Previous trainer sessions.
+- Payment transactions.
+- Booking cancellations.
+- Rescheduled bookings.
+
+Allow users to filter history by date, booking type, and status.
+
+Display complete booking and payment information.
+
+---
+
+# 7. NON-FUNCTIONAL REQUIREMENTS
+
+All ten non-functional requirements from the SDF laboratory manual must be addressed.
+
+### NFR1 – Performance
+The application should respond to normal user requests within approximately three seconds under normal operating conditions.
+
+Optimize queries, images, components, and loading behavior.
+
+### NFR2 – Security
+Implement:
+- Secure password handling.
+- Authentication.
+- Role-based authorization.
+- Server-side input validation.
+- Protected API routes.
+- Database access policies.
+- Secure environment variables.
+- Protection against unauthorized access.
+
+### NFR3 – Availability
+Prepare the application for reliable 24/7 availability, subject to hosting-provider availability and planned maintenance.
+
+### NFR4 – Usability
+Maintain an intuitive interface for customers, trainers, facility owners, and administrators.
+
+### NFR5 – Scalability
+Use modular architecture and an appropriately structured relational database to support increasing users, facilities, trainers, and bookings.
+
+### NFR6 – Reliability
+Prevent double booking and ensure consistent booking and payment statuses.
+
+### NFR7 – Maintainability
+Use reusable components, modular code, clear naming conventions, and maintainable project architecture.
+
+### NFR8 – Compatibility
+Ensure compatibility with commonly used desktop and mobile browsers.
+
+### NFR9 – Data Integrity
+Maintain consistent relationships between customers, trainers, facilities, bookings, payments, and sessions.
+
+### NFR10 – Backup and Recovery
+Document and configure database backup and recovery procedures appropriate to the selected hosting plan.
+
+---
+
+# 8. COMPLETE APPLICATION PAGES
+
+Develop the following pages and modules.
+
+### Public Pages
+1. Landing page.
+2. About page.
+3. Sports discovery page.
+4. Facility discovery page.
+5. Facility details page.
+6. Trainer discovery page.
+7. Trainer profile page.
+8. Login page.
+9. Registration page.
+10. Forgot password page.
+
+### Customer Dashboard
+1. Overview dashboard.
+2. My Profile.
+3. Browse Sports.
+4. Explore Facilities.
+5. Facility Details.
+6. Availability Calendar.
+7. Book Facility.
+8. Trainer Discovery.
+9. Trainer Details.
+10. Trainer Booking.
+11. Payment.
+12. Booking Confirmation.
+13. My Bookings.
+14. Booking History.
+15. Payment History.
+16. Reviews and Ratings.
+17. Notifications.
+18. Settings.
+
+### Trainer Dashboard
+1. Overview.
+2. Trainer Profile.
+3. Manage Availability.
+4. Upcoming Sessions.
+5. Session Requests.
+6. Session History.
+7. Notifications.
+8. Settings.
+
+### Facility Owner Dashboard
+1. Overview.
+2. My Facilities.
+3. Add Facility.
+4. Edit Facility.
+5. Manage Pricing.
+6. Manage Operating Hours.
+7. Manage Availability.
+8. Booking Management.
+9. Facility Analytics.
+
+### Administrator Dashboard
+1. Admin Overview.
+2. Customer Management.
+3. Trainer Management.
+4. Facility Owner Management.
+5. Sports Management.
+6. Facility Management.
+7. Booking Management.
+8. Payment Management.
+9. Review Management.
+10. Reported Issues.
+11. Platform Analytics.
+12. System Settings.
+
+All pages must have working navigation and appropriate access restrictions.
+
+---
+
+# 9. DATABASE DESIGN
+
+Design a properly normalized PostgreSQL database.
+
+Include appropriate tables for:
+
+- users
+- customer_profiles
+- trainer_profiles
+- facility_owners
+- sports
+- facilities
+- facility_images
+- facility_sports
+- facility_operating_hours
+- facility_time_slots
+- trainers
+- trainer_sports
+- trainer_availability
+- bookings
+- trainer_sessions
+- payments
+- reviews
+- notifications
+- cancellations
+- reported_issues
+
+Define:
+- Primary keys.
+- Foreign keys.
+- Relationships.
+- Appropriate indexes.
+- Unique constraints.
+- Timestamps.
+- Booking status.
+- Payment status.
+- Role permissions.
+
+Use secure database access policies.
+
+Do not rely on frontend-only validation to protect database records.
+
+Ensure that users can access only the data permitted by their roles.
+
+---
+
+# 10. BOOKING WORKFLOW AND BUSINESS LOGIC
+
+The booking process must follow the supplied activity diagram and DFD workflow.
+
+Implement this sequence:
+
+Application Entry
+→ Registration / Login
+→ Browse Sports
+→ Browse Facilities
+→ Select Facility
+→ Display Facility Details
+→ Check Availability
+→ Select Date and Time
+→ Book Slot
+→ Update Slot Availability
+→ Payment
+→ Payment Method Selection
+→ Payment Verification
+→ Booking Confirmation
+→ Booking History
+→ Feedback / Cancellation
+→ Logout
+
+Support payment options:
+- Credit Card.
+- Debit Card.
+- UPI.
+
+Implement booking states such as:
+- Pending.
+- Payment Pending.
+- Confirmed.
+- Cancelled.
+- Rescheduled.
+- Completed.
+- Failed.
+
+Implement appropriate transitions and prevent invalid status changes.
+
+Do not release or permanently reserve a slot incorrectly when payment fails or expires.
+
+Use a clearly defined booking reservation expiry mechanism.
+
+---
+
+# 11. UNIQUE GUI AND INDIVIDUAL IMPLEMENTATION REQUIREMENT
+
+This assignment specifically requires every student to independently implement their own GUI.
+
+Therefore:
+
+- Do not reproduce another student's dashboard.
+- Do not use the supplied DFD or activity diagram as the visual website layout.
+- Create a distinct visual hierarchy.
+- Create original navigation.
+- Create unique dashboard cards.
+- Create original facility and trainer presentation layouts.
+- Use a different color combination and component arrangement.
+- Design original booking and availability interfaces.
+- Use a consistent individual design system.
+
+The implementation must remain functionally consistent with the common group requirements while being visually and technically distinguishable as an individual implementation.
+
+---
+
+# 12. TESTING AND QUALITY ASSURANCE
+
+Testing is a mandatory part of this assignment.
+
+Prepare and execute individual test cases for all major functionalities.
+
+Use:
+- Unit testing.
+- Integration testing.
+- End-to-end testing.
+- UI testing.
+- Form validation testing.
+- Authentication testing.
+- Authorization testing.
+- Booking workflow testing.
+- Payment workflow testing.
+- Responsive testing.
+
+Recommended tools:
+- Vitest.
+- React Testing Library.
+- Playwright.
+
+### Mandatory test cases
+
+Include test cases for:
+
+1. Successful user registration.
+2. Duplicate registration prevention.
+3. Successful login.
+4. Invalid login credentials.
+5. Password reset.
+6. Profile updates.
+7. Sports browsing.
+8. Facility searching.
+9. Facility filtering.
+10. Availability checking.
+11. Booking an available slot.
+12. Attempting to book an unavailable slot.
+13. Preventing double bookings.
+14. Successful payment.
+15. Failed payment.
+16. Payment retry.
+17. Booking confirmation.
+18. Booking cancellation.
+19. Booking rescheduling.
+20. Trainer searching.
+21. Trainer booking.
+22. Trainer availability updates.
+23. Facility owner operations.
+24. Admin operations.
+25. Review submission.
+26. Booking history.
+27. Unauthorized access prevention.
+28. Logout and session termination.
+29. Mobile responsiveness.
+30. Database data integrity.
+
+For every test case, document:
+
+- Test Case ID.
+- Test Scenario.
+- Preconditions.
+- Input Data.
+- Execution Steps.
+- Expected Result.
+- Actual Result.
+- Pass/Fail Status.
+
+Actually execute the tests and report their results. Never mark an unexecuted test as passed.
+
+---
+
+# 13. DEMO DATA AND INITIAL SETUP
+
+Create realistic initial demonstration data.
+
+Include:
+- Multiple sports categories.
+- Multiple sports facilities.
+- Different facility prices.
+- Different locations.
+- Different available time slots.
+- Trainer profiles.
+- Trainer expertise.
+- Trainer availability.
+- Sample bookings.
+- Payment records.
+- Reviews and ratings.
+
+Create appropriate role-based demonstration accounts only through a secure seed process.
+
+Clearly document how to initialize the database and create the first administrator account.
+
+Do not expose production credentials or hardcode passwords in the source code.
+
+---
+
+# 14. ERROR HANDLING AND APPLICATION STABILITY
+
+Implement comprehensive error handling.
+
+Handle:
+- Invalid form submissions.
+- Network failures.
+- Authentication failures.
+- Database errors.
+- Payment failures.
+- Unavailable time slots.
+- Unauthorized operations.
+- Missing records.
+- Expired sessions.
+- Unexpected application errors.
+
+Provide clear error messages and recovery actions.
+
+Implement:
+- Loading indicators.
+- Skeleton loaders.
+- Empty states.
+- Success notifications.
+- Error notifications.
+- Confirmation dialogs.
+
+Ensure that no page crashes because of missing or invalid data.
+
+---
+
+# 15. DEPLOYMENT REQUIREMENTS
+
+This project must be ready for actual deployment.
+
+Prepare:
+
+1. Complete project source code.
+2. Production-ready folder structure.
+3. Database schema and migrations.
+4. Seed scripts.
+5. Authentication configuration.
+6. Environment variable template.
+7. API documentation.
+8. README documentation.
+9. Test configuration.
+10. Production build configuration.
+11. Deployment instructions.
+12. Error logging and monitoring configuration.
+
+Use `.env.example` for required environment variables.
+
+Never commit actual API keys, database passwords, or payment secrets to GitHub.
+
+Ensure that:
+- All required routes work.
+- All database connections work.
+- Authentication works after deployment.
+- Role-based authorization works.
+- Payment integration is correctly configured for the selected environment.
+- Images load correctly.
+- No local-only paths or development-only assumptions remain.
+- The application builds successfully.
+
+Run the production build and fix all errors before declaring the application ready.
+
+---
+
+# 16. DEVELOPMENT EXECUTION STRATEGY
+
+Follow this implementation sequence.
+
+### Phase 1 – Requirement Analysis
+Analyze all supplied requirements and diagrams.
+
+Create a feature checklist covering FR1–FR15 and NFR1–NFR10.
+
+### Phase 2 – Architecture
+Design the frontend, backend, database, authentication, and payment architecture.
+
+### Phase 3 – UI/UX
+Develop the original design system and all application screens.
+
+### Phase 4 – Backend Development
+Implement database tables, relationships, APIs, authentication, and permissions.
+
+### Phase 5 – Functional Integration
+Connect every frontend component to the backend.
+
+### Phase 6 – Business Logic
+Implement booking, availability, cancellation, rescheduling, payment, and notifications.
+
+### Phase 7 – Testing
+Write and execute the test cases. Fix all identified issues.
+
+### Phase 8 – Deployment Preparation
+Configure environment variables, production builds, database migrations, and hosting.
+
+### Phase 9 – Final Verification
+Verify the complete application from registration through booking, payment, confirmation, history, and logout.
+
+---
+
+# 17. STRICT DEVELOPMENT RULES
+
+These rules are mandatory.
+
+1. Do not omit any functional requirement.
+2. Do not omit any non-functional requirement.
+3. Do not build only a frontend prototype.
+4. Do not use static mock data as a substitute for backend functionality.
+5. Do not create buttons without implementing their actions.
+6. Do not create navigation links that lead to missing pages.
+7. Do not leave forms without validation.
+8. Do not implement insecure authentication.
+9. Do not trust frontend payment success messages.
+10. Do not permit duplicate facility or trainer bookings.
+11. Do not expose administrator functionality to unauthorized users.
+12. Do not ignore mobile responsiveness.
+13. Do not leave major features as TODO placeholders.
+14. Do not claim testing has passed unless it has actually been executed.
+15. Do not claim production payment integration is operational without valid configuration and verification.
+16. Do not stop after generating the initial UI.
+17. Do not sacrifice functional completeness for visual appearance.
+18. Do not silently ignore build errors or runtime errors.
+
+If a requirement cannot be completed because an external service requires credentials, implement the appropriate integration boundary, document the missing configuration, and provide a working test-mode or local alternative where feasible.
+
+---
+
+# 18. FINAL DELIVERABLES
+
+At completion, provide:
+
+1. Fully developed Sports Management System website.
+2. Original individual GUI design.
+3. Fully integrated frontend and backend.
+4. Working registration and authentication.
+5. Customer dashboard.
+6. Trainer dashboard.
+7. Facility owner dashboard.
+8. Administrator dashboard.
+9. Complete facility and trainer booking workflows.
+10. Availability management.
+11. Payment integration.
+12. Booking confirmation and notifications.
+13. Booking history and reviews.
+14. PostgreSQL database schema.
+15. Database migrations and seed data.
+16. Complete test case documentation.
+17. Actual test execution results.
+18. Production build verification.
+19. GitHub-ready source code.
+20. Deployment documentation.
+21. README containing installation and configuration instructions.
+
+### FINAL ACCEPTANCE CRITERIA
+
+The project will be considered complete only when:
+
+- Every FR1–FR15 requirement has been implemented.
+- Every NFR1–NFR10 requirement has been addressed.
+- All four user roles function correctly.
+- All important workflows operate end to end.
+- Database records persist correctly.
+- Booking conflicts are prevented.
+- Payment status is securely verified.
+- Unauthorized access is prevented.
+- The GUI is original and responsive.
+- Test cases have been executed and results documented.
+- The production build completes without errors.
+- The application is prepared for deployment.
+
+**FINAL INSTRUCTION:**
+
+Develop this as a complete, professional, independently implemented, deployment-ready Sports Management System.
+
+Prioritize functional correctness, security, database integrity, original UI/UX, maintainability, and actual test execution.
+
+Do not deliver an incomplete academic demonstration. Deliver a complete software engineering project that can be demonstrated, tested, maintained, and deployed.
