@@ -1,13 +1,28 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import bcrypt from 'bcryptjs';
 
-const DB_PATH = process.env.SQLITE_DB_PATH || path.resolve(process.cwd(), 'data', 'arena360.db');
+export function resolveDatabasePath(env: NodeJS.ProcessEnv = process.env): string {
+  if (env.SQLITE_DB_PATH) {
+    return env.SQLITE_DB_PATH;
+  }
+  if (env.VERCEL || env.AWS_LAMBDA_FUNCTION_NAME) {
+    return path.join(os.tmpdir(), 'arena360.db');
+  }
+  return path.resolve(process.cwd(), 'data', 'arena360.db');
+}
+
+const DB_PATH = resolveDatabasePath();
 fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
 
 export const db = new DatabaseSync(DB_PATH);
-db.exec('PRAGMA journal_mode = WAL;');
+try {
+  db.exec('PRAGMA journal_mode = WAL;');
+} catch {
+  // Ignore on filesystems that do not support WAL locking
+}
 db.exec('PRAGMA foreign_keys = ON;');
 
 export function initSchema(): void {

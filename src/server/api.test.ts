@@ -1036,3 +1036,15 @@ test('Lab FR1-FR15 Invalid Input & Edge-Case Verification', async () => {
   assert.equal(unauthHist.status, 401);
 });
 
+test('Vercel serverless config resolves writable tmp SQLite path and exports Express handler', async () => {
+  const { resolveDatabasePath } = await import('./db.ts');
+  assert.equal(resolveDatabasePath({ SQLITE_DB_PATH: '/custom/db.sqlite' }), '/custom/db.sqlite');
+  assert.equal(resolveDatabasePath({ VERCEL: '1' }), path.join(os.tmpdir(), 'arena360.db'));
+  assert.equal(
+    resolveDatabasePath({}),
+    path.resolve(process.cwd(), 'data', 'arena360.db')
+  );
+
+  const vercelEntry = await import('../../api/index.ts');
+  assert.equal(typeof vercelEntry.default, 'function');
+});

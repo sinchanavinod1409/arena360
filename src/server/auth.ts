@@ -1,15 +1,40 @@
 import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { initializeApp, getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
-import firebaseConfig from '../../firebase-applet-config.json' with { type: 'json' };
 import { db } from './db.ts';
 import type { UserRole } from './domain.ts';
 
+function loadFirebaseProjectId(): string {
+  if (process.env.FIREBASE_PROJECT_ID) {
+    return process.env.FIREBASE_PROJECT_ID;
+  }
+  const candidates = [
+    path.resolve(process.cwd(), 'firebase-applet-config.json'),
+    path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../firebase-applet-config.json'),
+  ];
+  for (const candidate of candidates) {
+    try {
+      if (fs.existsSync(candidate)) {
+        const parsed = JSON.parse(fs.readFileSync(candidate, 'utf8')) as { projectId?: string };
+        if (parsed.projectId) return parsed.projectId;
+      }
+    } catch {
+      // Try next candidate
+    }
+  }
+  return 'gen-lang-client-0946597153';
+}
+
+const firebaseProjectId = loadFirebaseProjectId();
+
 if (!getApps().length) {
   initializeApp({
-    projectId: firebaseConfig.projectId,
+    projectId: firebaseProjectId,
   });
 }
 
@@ -18,7 +43,7 @@ const adminAuth = getAuth();
 const JWT_SECRET =
   process.env.JWT_SECRET && process.env.JWT_SECRET !== 'replace-with-strong-random-32-byte-secret'
     ? process.env.JWT_SECRET
-    : crypto.createHash('sha256').update(`arena360-${firebaseConfig.projectId}-session`).digest('hex');
+    : crypto.createHash('sha256').update(`arena360-${firebaseProjectId}-session`).digest('hex');
 
 export interface SessionUser {
   id: number;

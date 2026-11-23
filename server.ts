@@ -2,15 +2,11 @@ import 'dotenv/config';
 import path from 'node:path';
 import express from 'express';
 import { createServer as createViteServer } from 'vite';
-import { apiRouter } from './src/server/routes.ts';
+import { createApiApp } from './src/server/app.ts';
 
 async function startServer() {
-  const app = express();
+  const app = createApiApp();
   const PORT = Number(process.env.PORT) || 3000;
-
-  app.use(express.json({ limit: '4mb' }));
-
-  app.use('/api', apiRouter);
 
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
