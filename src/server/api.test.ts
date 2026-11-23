@@ -1045,6 +1045,6 @@ test('Vercel serverless config resolves writable tmp SQLite path and exports Exp
     path.resolve(process.cwd(), 'data', 'arena360.db')
   );
 
-  const vercelEntry = await import('../../api/index.ts');
+  const vercelEntry = await import('../server/vercel.ts'.replace('../server/', './'));
   assert.equal(typeof vercelEntry.default, 'function');
 });

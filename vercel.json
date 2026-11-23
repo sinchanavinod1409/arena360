@@ -4,14 +4,14 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "functions": {
-    "api/index.ts": {
-      "includeFiles": "firebase-applet-config.json"
+    "api/index.mjs": {
+      "includeFiles": "{firebase-applet-config.json,node_modules/sql.js/dist/sql-wasm.wasm}"
     }
   },
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/api"
+      "destination": "/api?__vpath=$1"
     },
     {
       "source": "/((?!api(?:/|$)).*)",

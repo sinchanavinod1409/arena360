@@ -1,7 +1,6 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import type { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { initializeApp, getApps } from 'firebase-admin/app';
@@ -13,19 +12,14 @@ function loadFirebaseProjectId(): string {
   if (process.env.FIREBASE_PROJECT_ID) {
     return process.env.FIREBASE_PROJECT_ID;
   }
-  const candidates = [
-    path.resolve(process.cwd(), 'firebase-applet-config.json'),
-    path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../firebase-applet-config.json'),
-  ];
-  for (const candidate of candidates) {
-    try {
-      if (fs.existsSync(candidate)) {
-        const parsed = JSON.parse(fs.readFileSync(candidate, 'utf8')) as { projectId?: string };
-        if (parsed.projectId) return parsed.projectId;
-      }
-    } catch {
-      // Try next candidate
+  try {
+    const configPath = path.resolve(process.cwd(), 'firebase-applet-config.json');
+    if (fs.existsSync(configPath)) {
+      const parsed = JSON.parse(fs.readFileSync(configPath, 'utf8')) as { projectId?: string };
+      if (parsed.projectId) return parsed.projectId;
     }
+  } catch {
+    // Fallback to default project ID
   }
   return 'gen-lang-client-0946597153';
 }

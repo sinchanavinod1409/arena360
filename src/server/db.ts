@@ -1,8 +1,19 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { DatabaseSync } from 'node:sqlite';
 import bcrypt from 'bcryptjs';
+import initSqlJs from 'sql.js';
+
+export interface DbStatementLike {
+  get: (...params: unknown[]) => unknown;
+  all: (...params: unknown[]) => unknown[];
+  run: (...params: unknown[]) => { lastInsertRowid: number | bigint; changes: number | bigint };
+}
+
+export interface DbLike {
+  exec: (sql: string) => void;
+  prepare: (sql: string) => DbStatementLike;
+}
 
 export function resolveDatabasePath(env: NodeJS.ProcessEnv = process.env): string {
   if (env.SQLITE_DB_PATH) {
@@ -14,16 +25,95 @@ export function resolveDatabasePath(env: NodeJS.ProcessEnv = process.env): strin
   return path.resolve(process.cwd(), 'data', 'arena360.db');
 }
 
-const DB_PATH = resolveDatabasePath();
-fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
+export async function createSqlJsDatabase(): Promise<DbLike> {
+  const wasmPath = path.resolve(process.cwd(), 'node_modules/sql.js/dist/sql-wasm.wasm');
+  let wasmBinary: ArrayBuffer | undefined;
+  try {
+    if (fs.existsSync(wasmPath)) {
+      const buf = fs.readFileSync(wasmPath);
+      wasmBinary = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
+    }
+  } catch {
+    // Let sql.js resolve wasm automatically if file read fails
+  }
 
-export const db = new DatabaseSync(DB_PATH);
-try {
-  db.exec('PRAGMA journal_mode = WAL;');
-} catch {
-  // Ignore on filesystems that do not support WAL locking
+  const SQL = await initSqlJs(
+    wasmBinary ? ({ wasmBinary } as Parameters<typeof initSqlJs>[0]) : undefined
+  );
+  const rawDb = new SQL.Database();
+  rawDb.exec('PRAGMA foreign_keys = ON;');
+
+  const norm = (params: unknown[]) =>
+    params.map((p) => (p === undefined ? null : (p as string | number | null | Uint8Array)));
+
+  return {
+    exec(sql: string) {
+      rawDb.exec(sql);
+    },
+    prepare(sql: string): DbStatementLike {
+      return {
+        get(...params: unknown[]) {
+          const stmt = rawDb.prepare(sql);
+          try {
+            if (params.length > 0) stmt.bind(norm(params));
+            return stmt.step() ? stmt.getAsObject() : undefined;
+          } finally {
+            stmt.free();
+          }
+        },
+        all(...params: unknown[]) {
+          const stmt = rawDb.prepare(sql);
+          const rows: Record<string, unknown>[] = [];
+          try {
+            if (params.length > 0) stmt.bind(norm(params));
+            while (stmt.step()) {
+              rows.push(stmt.getAsObject() as Record<string, unknown>);
+            }
+            return rows;
+          } finally {
+            stmt.free();
+          }
+        },
+        run(...params: unknown[]) {
+          const stmt = rawDb.prepare(sql);
+          try {
+            if (params.length > 0) stmt.bind(norm(params));
+            stmt.step();
+          } finally {
+            stmt.free();
+          }
+          const lastRes = rawDb.exec('SELECT last_insert_rowid() AS id');
+          const lastInsertRowid = Number(lastRes[0]?.values[0]?.[0] ?? 0);
+          const changes = rawDb.getRowsModified();
+          return { lastInsertRowid, changes };
+        },
+      };
+    },
+  };
 }
-db.exec('PRAGMA foreign_keys = ON;');
+
+async function createDatabase(): Promise<DbLike> {
+  if (process.env.USE_SQLJS !== '1') {
+    try {
+      const sqliteMod = (await import('node:sqlite')) as typeof import('node:sqlite');
+      const dbPath = resolveDatabasePath();
+      fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+      const nativeDb = new sqliteMod.DatabaseSync(dbPath);
+      try {
+        nativeDb.exec('PRAGMA journal_mode = WAL;');
+      } catch {
+        // Ignore on filesystems that do not support WAL locking
+      }
+      nativeDb.exec('PRAGMA foreign_keys = ON;');
+      return nativeDb as unknown as DbLike;
+    } catch (err) {
+      console.warn('[db] node:sqlite unavailable, using sql.js WASM fallback:', (err as Error).message);
+    }
+  }
+  return createSqlJsDatabase();
+}
+
+export const db: DbLike = await createDatabase();
 
 export function initSchema(): void {
   db.exec(`
