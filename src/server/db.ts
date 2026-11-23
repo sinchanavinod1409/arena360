@@ -92,28 +92,90 @@ export async function createSqlJsDatabase(): Promise<DbLike> {
   };
 }
 
-async function createDatabase(): Promise<DbLike> {
-  if (process.env.USE_SQLJS !== '1') {
+let activeDb: DbLike | null = null;
+let readyPromise: Promise<void> | null = null;
+let schemaInitialized = false;
+
+function tryCreateNativeDbSync(): DbLike | null {
+  if (process.env.USE_SQLJS === '1') return null;
+  try {
+    const getBuiltin = (process as unknown as { getBuiltinModule?: (id: string) => unknown }).getBuiltinModule;
+    const sqliteMod = getBuiltin ? (getBuiltin('sqlite') as typeof import('node:sqlite') | undefined) : undefined;
+    if (!sqliteMod?.DatabaseSync) return null;
+    const dbPath = resolveDatabasePath();
+    fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+    const nativeDb = new sqliteMod.DatabaseSync(dbPath);
     try {
-      const sqliteMod = (await import('node:sqlite')) as typeof import('node:sqlite');
-      const dbPath = resolveDatabasePath();
-      fs.mkdirSync(path.dirname(dbPath), { recursive: true });
-      const nativeDb = new sqliteMod.DatabaseSync(dbPath);
-      try {
-        nativeDb.exec('PRAGMA journal_mode = WAL;');
-      } catch {
-        // Ignore on filesystems that do not support WAL locking
-      }
-      nativeDb.exec('PRAGMA foreign_keys = ON;');
-      return nativeDb as unknown as DbLike;
-    } catch (err) {
-      console.warn('[db] node:sqlite unavailable, using sql.js WASM fallback:', (err as Error).message);
+      nativeDb.exec('PRAGMA journal_mode = WAL;');
+    } catch {
+      // Ignore on filesystems that do not support WAL locking
     }
+    nativeDb.exec('PRAGMA foreign_keys = ON;');
+    return nativeDb as unknown as DbLike;
+  } catch (err) {
+    console.warn('[db] node:sqlite unavailable, falling back to sql.js WASM:', (err as Error).message);
+    return null;
   }
-  return createSqlJsDatabase();
 }
 
-export const db: DbLike = await createDatabase();
+function getActiveDbSync(): DbLike {
+  if (!activeDb) {
+    const nativeDb = tryCreateNativeDbSync();
+    if (!nativeDb) {
+      throw new Error('Database not initialized yet; await ensureDbReady() before querying.');
+    }
+    activeDb = nativeDb;
+  }
+  if (!schemaInitialized) {
+    schemaInitialized = true;
+    initSchema();
+    seedDatabaseIfEmpty();
+  }
+  return activeDb;
+}
+
+export async function ensureDbReady(): Promise<void> {
+  if (activeDb && schemaInitialized) return;
+  if (!readyPromise) {
+    readyPromise = (async () => {
+      if (!activeDb) {
+        const nativeDb = tryCreateNativeDbSync();
+        if (nativeDb) {
+          try {
+            activeDb = nativeDb;
+            schemaInitialized = true;
+            initSchema();
+            seedDatabaseIfEmpty();
+            return;
+          } catch (err) {
+            console.warn('[db] node:sqlite schema/seed failed, falling back to sql.js WASM:', (err as Error).message);
+            activeDb = null;
+            schemaInitialized = false;
+          }
+        }
+        activeDb = await createSqlJsDatabase();
+      }
+      if (!schemaInitialized) {
+        schemaInitialized = true;
+        initSchema();
+        seedDatabaseIfEmpty();
+      }
+    })().catch((err) => {
+      readyPromise = null;
+      throw err;
+    });
+  }
+  return readyPromise;
+}
+
+export const db: DbLike = {
+  exec(sql: string) {
+    return getActiveDbSync().exec(sql);
+  },
+  prepare(sql: string) {
+    return getActiveDbSync().prepare(sql);
+  },
+};
 
 export function initSchema(): void {
   db.exec(`
@@ -956,6 +1018,3 @@ export function seedDatabaseIfEmpty(): void {
     throw err;
   }
 }
-
-initSchema();
-seedDatabaseIfEmpty();

@@ -11,7 +11,7 @@ const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'arena360-test-'));
 process.env.SQLITE_DB_PATH = path.join(tmpDir, 'test.db');
 
 const { apiRouter } = await import('./routes.ts');
-const { db } = await import('./db.ts');
+const { db, ensureDbReady } = await import('./db.ts');
 
 let server: http.Server;
 let baseUrl = '';
@@ -41,6 +41,7 @@ async function reqJson<T = Record<string, unknown>>(
 }
 
 before(async () => {
+  await ensureDbReady();
   const app = express();
   app.use(express.json());
   app.use('/api', apiRouter);

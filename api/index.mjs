@@ -1,14 +1,5 @@
-// src/server/vercel.ts
-import express2 from "express";
-
 // src/server/app.ts
 import express from "express";
-
-// src/server/routes.ts
-import crypto3 from "node:crypto";
-import { Router } from "express";
-import bcrypt2 from "bcryptjs";
-import { z } from "zod";
 
 // src/server/db.ts
 import fs from "node:fs";
@@ -35,7 +26,9 @@ async function createSqlJsDatabase() {
     }
   } catch {
   }
-  const SQL = await initSqlJs(wasmBinary ? { wasmBinary } : void 0);
+  const SQL = await initSqlJs(
+    wasmBinary ? { wasmBinary } : void 0
+  );
   const rawDb = new SQL.Database();
   rawDb.exec("PRAGMA foreign_keys = ON;");
   const norm = (params) => params.map((p) => p === void 0 ? null : p);
@@ -84,26 +77,85 @@ async function createSqlJsDatabase() {
     }
   };
 }
-async function createDatabase() {
-  if (process.env.USE_SQLJS !== "1") {
+var activeDb = null;
+var readyPromise = null;
+var schemaInitialized = false;
+function tryCreateNativeDbSync() {
+  if (process.env.USE_SQLJS === "1") return null;
+  try {
+    const getBuiltin = process.getBuiltinModule;
+    const sqliteMod = getBuiltin ? getBuiltin("sqlite") : void 0;
+    if (!sqliteMod?.DatabaseSync) return null;
+    const dbPath = resolveDatabasePath();
+    fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+    const nativeDb = new sqliteMod.DatabaseSync(dbPath);
     try {
-      const sqliteMod = await import("node:sqlite");
-      const dbPath = resolveDatabasePath();
-      fs.mkdirSync(path.dirname(dbPath), { recursive: true });
-      const nativeDb = new sqliteMod.DatabaseSync(dbPath);
-      try {
-        nativeDb.exec("PRAGMA journal_mode = WAL;");
-      } catch {
-      }
-      nativeDb.exec("PRAGMA foreign_keys = ON;");
-      return nativeDb;
-    } catch (err) {
-      console.warn("[db] node:sqlite unavailable, using sql.js WASM fallback:", err.message);
+      nativeDb.exec("PRAGMA journal_mode = WAL;");
+    } catch {
     }
+    nativeDb.exec("PRAGMA foreign_keys = ON;");
+    return nativeDb;
+  } catch (err) {
+    console.warn("[db] node:sqlite unavailable, falling back to sql.js WASM:", err.message);
+    return null;
   }
-  return createSqlJsDatabase();
 }
-var db = await createDatabase();
+function getActiveDbSync() {
+  if (!activeDb) {
+    const nativeDb = tryCreateNativeDbSync();
+    if (!nativeDb) {
+      throw new Error("Database not initialized yet; await ensureDbReady() before querying.");
+    }
+    activeDb = nativeDb;
+  }
+  if (!schemaInitialized) {
+    schemaInitialized = true;
+    initSchema();
+    seedDatabaseIfEmpty();
+  }
+  return activeDb;
+}
+async function ensureDbReady() {
+  if (activeDb && schemaInitialized) return;
+  if (!readyPromise) {
+    readyPromise = (async () => {
+      if (!activeDb) {
+        const nativeDb = tryCreateNativeDbSync();
+        if (nativeDb) {
+          try {
+            activeDb = nativeDb;
+            schemaInitialized = true;
+            initSchema();
+            seedDatabaseIfEmpty();
+            return;
+          } catch (err) {
+            console.warn("[db] node:sqlite schema/seed failed, falling back to sql.js WASM:", err.message);
+            activeDb = null;
+            schemaInitialized = false;
+          }
+        }
+        activeDb = await createSqlJsDatabase();
+      }
+      if (!schemaInitialized) {
+        schemaInitialized = true;
+        initSchema();
+        seedDatabaseIfEmpty();
+      }
+    })().catch((err) => {
+      readyPromise = null;
+      throw err;
+    });
+  }
+  return readyPromise;
+}
+var db = {
+  exec(sql) {
+    return getActiveDbSync().exec(sql);
+  },
+  prepare(sql) {
+    return getActiveDbSync().prepare(sql);
+  }
+};
 function initSchema() {
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (
@@ -899,8 +951,12 @@ function seedDatabaseIfEmpty() {
     throw err;
   }
 }
-initSchema();
-seedDatabaseIfEmpty();
+
+// src/server/routes.ts
+import crypto3 from "node:crypto";
+import { Router } from "express";
+import bcrypt2 from "bcryptjs";
+import { z } from "zod";
 
 // src/server/auth.ts
 import crypto from "node:crypto";
@@ -2768,28 +2824,53 @@ apiRouter.patch("/admin/issues/:id", requireAuth, requireRole("admin"), (req, re
 
 // src/server/app.ts
 function createApiApp() {
-  const app2 = express();
-  app2.use(express.json({ limit: "4mb" }));
-  app2.use("/api", apiRouter);
-  return app2;
+  const app = express();
+  app.use(express.json({ limit: "4mb" }));
+  app.use(async (_req, _res, next) => {
+    try {
+      await ensureDbReady();
+      next();
+    } catch (err) {
+      next(err);
+    }
+  });
+  app.use("/api", apiRouter);
+  app.use((err, _req, res, _next) => {
+    console.error("[api-error]", err);
+    if (!res.headersSent) {
+      res.status(500).json({
+        error: err instanceof Error ? err.message : "Internal server error"
+      });
+    }
+  });
+  return app;
 }
 
 // src/server/vercel.ts
-var app = express2();
 var apiApp = createApiApp();
-app.use((req, res, next) => {
-  if (req.url === "/api" || req.url.startsWith("/api?")) {
-    const urlObj = new URL(req.url, "http://localhost");
-    const vpath = urlObj.searchParams.get("__vpath");
-    if (vpath !== null) {
-      urlObj.searchParams.delete("__vpath");
-      const qs = urlObj.searchParams.toString();
-      req.url = `/api/${vpath}${qs ? `?${qs}` : ""}`;
+async function handler(req, res) {
+  try {
+    await ensureDbReady();
+    if (req.url === "/api" || req.url.startsWith("/api?")) {
+      const urlObj = new URL(req.url, "http://localhost");
+      const vpath = urlObj.searchParams.get("__vpath");
+      if (vpath !== null) {
+        urlObj.searchParams.delete("__vpath");
+        const qs = urlObj.searchParams.toString();
+        req.url = `/api/${vpath}${qs ? `?${qs}` : ""}`;
+      }
+    }
+    return apiApp(req, res);
+  } catch (err) {
+    console.error("[vercel-handler] startup/request error:", err);
+    if (!res.headersSent) {
+      res.status(500).json({
+        error: "Serverless function failed",
+        detail: err instanceof Error ? err.message : String(err)
+      });
     }
   }
-  return apiApp(req, res, next);
-});
-var vercel_default = app;
+}
 export {
-  vercel_default as default
+  handler as default
 };
