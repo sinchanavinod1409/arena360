@@ -130,6 +130,7 @@ function getActiveDbSync(): DbLike {
     schemaInitialized = true;
     initSchema();
     seedDatabaseIfEmpty();
+    migrateLegacySeededUsers();
   }
   return activeDb;
 }
@@ -146,6 +147,7 @@ export async function ensureDbReady(): Promise<void> {
             schemaInitialized = true;
             initSchema();
             seedDatabaseIfEmpty();
+            migrateLegacySeededUsers();
             return;
           } catch (err) {
             console.warn('[db] node:sqlite schema/seed failed, falling back to sql.js WASM:', (err as Error).message);
@@ -159,6 +161,7 @@ export async function ensureDbReady(): Promise<void> {
         schemaInitialized = true;
         initSchema();
         seedDatabaseIfEmpty();
+        migrateLegacySeededUsers();
       }
     })().catch((err) => {
       readyPromise = null;
@@ -446,7 +449,7 @@ export function seedDatabaseIfEmpty(): void {
   const existingUsers = db.prepare('SELECT COUNT(*) as cnt FROM users').get() as { cnt: number };
   if (existingUsers.cnt > 0) return;
 
-  const demoPassword = process.env.SEED_DEMO_PASSWORD || 'Arena360@2026';
+  const demoPassword = process.env.SEED_DEMO_PASSWORD || 'user@123';
   const pwHash = bcrypt.hashSync(demoPassword, 10);
 
   db.exec('BEGIN IMMEDIATE;');
@@ -460,7 +463,7 @@ export function seedDatabaseIfEmpty(): void {
       insertUser.run(
         'demo-customer-01',
         'Aarav Mehta',
-        'customer@arena360.in',
+        'customer@gmail.com',
         '9876543210',
         pwHash,
         'customer',
@@ -471,7 +474,7 @@ export function seedDatabaseIfEmpty(): void {
       insertUser.run(
         'demo-customer-02',
         'Priya Nair',
-        'priya.nair@arena360.in',
+        'priya.nair@gmail.com',
         '9876543211',
         pwHash,
         'customer',
@@ -482,7 +485,7 @@ export function seedDatabaseIfEmpty(): void {
       insertUser.run(
         'demo-trainer-01',
         'Rohan Kulkarni',
-        'trainer@arena360.in',
+        'trainer@gmail.com',
         '9876543220',
         pwHash,
         'trainer',
@@ -493,7 +496,7 @@ export function seedDatabaseIfEmpty(): void {
       insertUser.run(
         'demo-trainer-02',
         'Ananya Deshmukh',
-        'ananya.coach@arena360.in',
+        'ananya.coach@gmail.com',
         '9876543221',
         pwHash,
         'trainer',
@@ -504,7 +507,7 @@ export function seedDatabaseIfEmpty(): void {
       insertUser.run(
         'demo-trainer-03',
         'Vikramaditya Rao',
-        'vikram.swim@arena360.in',
+        'vikram.swim@gmail.com',
         '9876543222',
         pwHash,
         'trainer',
@@ -515,7 +518,7 @@ export function seedDatabaseIfEmpty(): void {
       insertUser.run(
         'demo-trainer-04',
         'Meera Subramanian',
-        'meera.coach@arena360.in',
+        'meera.coach@gmail.com',
         '9876543224',
         pwHash,
         'trainer',
@@ -526,7 +529,7 @@ export function seedDatabaseIfEmpty(): void {
       insertUser.run(
         'demo-trainer-05',
         'Arjun Gowda',
-        'arjun.coach@arena360.in',
+        'arjun.coach@gmail.com',
         '9876543225',
         pwHash,
         'trainer',
@@ -537,7 +540,7 @@ export function seedDatabaseIfEmpty(): void {
       insertUser.run(
         'demo-trainer-06',
         'Nandini Hegde',
-        'nandini.coach@arena360.in',
+        'nandini.coach@gmail.com',
         '9876543226',
         pwHash,
         'trainer',
@@ -548,7 +551,7 @@ export function seedDatabaseIfEmpty(): void {
       insertUser.run(
         'demo-trainer-07',
         'Kabir Malhotra',
-        'kabir.pending@arena360.in',
+        'kabir.pending@gmail.com',
         '9876543223',
         pwHash,
         'trainer',
@@ -559,7 +562,7 @@ export function seedDatabaseIfEmpty(): void {
       insertUser.run(
         'demo-owner-01',
         'Siddharth Verma',
-        'owner@arena360.in',
+        'owner@gmail.com',
         '9876543230',
         pwHash,
         'facility_owner',
@@ -570,7 +573,7 @@ export function seedDatabaseIfEmpty(): void {
       insertUser.run(
         'demo-admin-01',
         'Karthik Subramanian',
-        'admin@arena360.in',
+        'admin@gmail.com',
         '9876543240',
         pwHash,
         'admin',
@@ -1016,5 +1019,29 @@ export function seedDatabaseIfEmpty(): void {
   } catch (err) {
     db.exec('ROLLBACK;');
     throw err;
+  }
+}
+
+export function migrateLegacySeededUsers(): void {
+  const legacyUsers = db
+    .prepare(`SELECT id, email, password_hash FROM users WHERE LOWER(email) LIKE '%@arena360.in'`)
+    .all() as Array<{ id: number; email: string; password_hash: string | null }>;
+
+  if (legacyUsers.length === 0) return;
+
+  const defaultPw = process.env.SEED_DEMO_PASSWORD || 'user@123';
+  const newHash = bcrypt.hashSync(defaultPw, 10);
+  const updateUser = db.prepare(
+    `UPDATE users SET email = ?, password_hash = ?, updated_at = datetime('now') WHERE id = ?`
+  );
+
+  for (const u of legacyUsers) {
+    const newEmail = u.email.replace(/@arena360\.in$/i, '@gmail.com');
+    const conflict = db
+      .prepare('SELECT id FROM users WHERE LOWER(email) = ? AND id != ?')
+      .get(newEmail.toLowerCase(), u.id) as { id: number } | undefined;
+    if (!conflict) {
+      updateUser.run(newEmail, newHash, u.id);
+    }
   }
 }

@@ -70,7 +70,7 @@ export function LoginPage({
                 type="text"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
-                placeholder="customer@arena360.in or 9876543210"
+                placeholder="customer@gmail.com or 9876543210"
                 className="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm focus:border-sky-600 focus:outline-none"
               />
             </div>
@@ -224,7 +224,7 @@ export function RegisterPage({ onNavigate }: { onNavigate: (path: string) => voi
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="riya@example.com"
+                placeholder="riya@gmail.com"
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-600 focus:outline-none"
               />
             </div>

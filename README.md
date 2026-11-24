@@ -41,14 +41,14 @@ Full-stack Sports Management System built with **React 19**, **TypeScript**, **T
 
 ## 3. Initial Seeded Accounts & Creating First Admin
 
-On first boot, `src/server/db.ts` seeds initial data for all 4 roles (default password `Arena360@2026`, configurable via `SEED_DEMO_PASSWORD` env var):
+On first boot, `src/server/db.ts` seeds initial data for all 4 roles (default password `user@123`, configurable via `SEED_DEMO_PASSWORD` env var):
 
 | Role | Email | Capabilities |
 | :--- | :--- | :--- |
-| Customer | `customer@arena360.in` | Book facilities/trainers, pay via UPI/card, cancel/reschedule, review |
-| Trainer | `trainer@arena360.in` | Profile, certifications, availability slots, session management |
-| Facility Owner | `owner@arena360.in` | Edit assigned facilities, operating hours, block/unblock slots, manage bookings |
-| Administrator | `admin@arena360.in` | Provision trainer/owner accounts, approve trainers, manage sports, moderate reviews, resolve issues |
+| Customer | `customer@gmail.com` | Book facilities/trainers, pay via UPI/card, cancel/reschedule, review |
+| Trainer | `trainer@gmail.com` | Profile, certifications, availability slots, session management |
+| Facility Owner | `owner@gmail.com` | Edit assigned facilities, operating hours, block/unblock slots, manage bookings |
+| Administrator | `admin@gmail.com` | Provision trainer/owner accounts, approve trainers, manage sports, moderate reviews, resolve issues |
 
 For production deployments, register via `POST /api/auth/register` and promote the initial administrator directly in the `users` table (`role = 'admin'`).
 

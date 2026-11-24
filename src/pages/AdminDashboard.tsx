@@ -88,7 +88,7 @@ export function AdminDashboard({ section }: { section: string }) {
     setNewUserName('');
     setNewUserEmail('');
     setNewUserPhone('');
-    setNewUserPassword('');
+    setNewUserPassword('user@123');
     setNewUserCity('Bengaluru');
     setNewUserBiz('');
     setNewTrainerExp(5);
@@ -696,7 +696,7 @@ export function AdminDashboard({ section }: { section: string }) {
                 type="email"
                 value={newUserEmail}
                 onChange={(e) => setNewUserEmail(e.target.value)}
-                placeholder="deepak@arena360.in"
+                placeholder="deepak@gmail.com"
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
               />
             </div>

@@ -76,7 +76,7 @@ test('booking reference generator creates unique structured IDs', () => {
 });
 
 test('validators check email, phone, UPI, card digits, and review eligibility', () => {
-  assert.equal(validateEmail('athlete@arena360.in'), true);
+  assert.equal(validateEmail('athlete@gmail.com'), true);
   assert.equal(validateEmail('invalid-email'), false);
   assert.equal(validatePhone('+91 98765 43210'), true);
   assert.equal(validatePhone('12345'), false);

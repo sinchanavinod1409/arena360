@@ -216,10 +216,10 @@ apiRouter.post('/auth/demo-login', (req, res) => {
     return res.status(400).json({ error: 'Invalid role selected.' });
   }
   const emailMap: Record<UserRole, string> = {
-    customer: 'customer@arena360.in',
-    trainer: 'trainer@arena360.in',
-    facility_owner: 'owner@arena360.in',
-    admin: 'admin@arena360.in',
+    customer: 'customer@gmail.com',
+    trainer: 'trainer@gmail.com',
+    facility_owner: 'owner@gmail.com',
+    admin: 'admin@gmail.com',
   };
   const user = db
     .prepare('SELECT id, uid, role, is_active FROM users WHERE email = ?')
@@ -2077,7 +2077,7 @@ const adminCreateUserSchema = z.object({
   name: z.string().trim().min(2, 'Name must be at least 2 characters').max(120),
   email: z.string().trim().email('Valid email is required').max(200),
   phone: z.string().trim().min(10, 'Enter a valid 10+ digit phone number').max(20),
-  password: z.string().min(8, 'Password must be at least 8 characters').max(128),
+  password: z.string().min(8, 'Password must be at least 8 characters').max(128).optional().default('user@123'),
   role: z.enum(['customer', 'trainer', 'facility_owner']),
   city: z.string().trim().max(80).optional().default('Bengaluru'),
   businessName: z.string().trim().max(120).optional(),

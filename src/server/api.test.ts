@@ -72,7 +72,7 @@ test('TC01-TC04: Registration, duplicate rejection, login, and invalid login', a
     '/api/auth/register',
     {
       name: 'Nikhil Sharma',
-      email: 'nikhil.test@arena360.in',
+      email: 'nikhil.test@gmail.com',
       phone: '9811122233',
       password: 'Password@123',
       role: 'customer',
@@ -87,7 +87,7 @@ test('TC01-TC04: Registration, duplicate rejection, login, and invalid login', a
   // TC01b: Non-customer self-registration rejected with 403
   const regTrainer = await reqJson('POST', '/api/auth/register', {
     name: 'Blocked Trainer',
-    email: 'blocked.trainer@arena360.in',
+    email: 'blocked.trainer@gmail.com',
     phone: '9811122255',
     password: 'Password@123',
     role: 'trainer',
@@ -96,7 +96,7 @@ test('TC01-TC04: Registration, duplicate rejection, login, and invalid login', a
 
   const regOwner = await reqJson('POST', '/api/auth/register', {
     name: 'Blocked Owner',
-    email: 'blocked.owner@arena360.in',
+    email: 'blocked.owner@gmail.com',
     phone: '9811122266',
     password: 'Password@123',
     role: 'facility_owner',
@@ -106,7 +106,7 @@ test('TC01-TC04: Registration, duplicate rejection, login, and invalid login', a
   // TC02: Duplicate email/phone rejected with 409
   const dup = await reqJson('POST', '/api/auth/register', {
     name: 'Nikhil Dup',
-    email: 'nikhil.test@arena360.in',
+    email: 'nikhil.test@gmail.com',
     phone: '9811122244',
     password: 'Password@123',
   });
@@ -114,21 +114,21 @@ test('TC01-TC04: Registration, duplicate rejection, login, and invalid login', a
 
   // TC03: Login seeded roles (email + mobile)
   const loginEmail = await reqJson<{ token: string; user: { role: string } }>('POST', '/api/auth/login', {
-    identifier: 'customer@arena360.in',
-    password: 'Arena360@2026',
+    identifier: 'customer@gmail.com',
+    password: 'user@123',
   });
   assert.equal(loginEmail.status, 200);
   customerToken = loginEmail.data.token;
 
   const loginPhone = await reqJson<{ token: string }>('POST', '/api/auth/login', {
     identifier: '9876543210',
-    password: 'Arena360@2026',
+    password: 'user@123',
   });
   assert.equal(loginPhone.status, 200);
 
   // TC04: Invalid login rejected
   const badLogin = await reqJson('POST', '/api/auth/login', {
-    identifier: 'customer@arena360.in',
+    identifier: 'customer@gmail.com',
     password: 'WrongPassword!',
   });
   assert.equal(badLogin.status, 401);
@@ -136,20 +136,20 @@ test('TC01-TC04: Registration, duplicate rejection, login, and invalid login', a
   // Obtain tokens for other seeded roles
   trainerToken = (
     await reqJson<{ token: string }>('POST', '/api/auth/login', {
-      identifier: 'trainer@arena360.in',
-      password: 'Arena360@2026',
+      identifier: 'trainer@gmail.com',
+      password: 'user@123',
     })
   ).data.token;
   ownerToken = (
     await reqJson<{ token: string }>('POST', '/api/auth/login', {
-      identifier: 'owner@arena360.in',
-      password: 'Arena360@2026',
+      identifier: 'owner@gmail.com',
+      password: 'user@123',
     })
   ).data.token;
   adminToken = (
     await reqJson<{ token: string }>('POST', '/api/auth/login', {
-      identifier: 'admin@arena360.in',
-      password: 'Arena360@2026',
+      identifier: 'admin@gmail.com',
+      password: 'user@123',
     })
   ).data.token;
 });
@@ -157,20 +157,20 @@ test('TC01-TC04: Registration, duplicate rejection, login, and invalid login', a
 test('TC05-TC06: Forgot password reset flow and profile updates', async () => {
   // TC05: Forgot password -> reset password -> login with new password
   const forgot = await reqJson<{ verificationCode: string }>('POST', '/api/auth/forgot-password', {
-    email: 'nikhil.test@arena360.in',
+    email: 'nikhil.test@gmail.com',
   });
   assert.equal(forgot.status, 200);
   assert.ok(forgot.data.verificationCode);
 
   const reset = await reqJson('POST', '/api/auth/reset-password', {
-    email: 'nikhil.test@arena360.in',
+    email: 'nikhil.test@gmail.com',
     code: forgot.data.verificationCode,
     newPassword: 'NewPassword@456',
   });
   assert.equal(reset.status, 200);
 
   const loginNew = await reqJson('POST', '/api/auth/login', {
-    identifier: 'nikhil.test@arena360.in',
+    identifier: 'nikhil.test@gmail.com',
     password: 'NewPassword@456',
   });
   assert.equal(loginNew.status, 200);
@@ -181,7 +181,7 @@ test('TC05-TC06: Forgot password reset flow and profile updates', async () => {
     '/api/profile',
     {
       name: 'Nikhil Sharma Updated',
-      email: 'nikhil.test@arena360.in',
+      email: 'nikhil.test@gmail.com',
       phone: '9811122233',
       city: 'Bengaluru',
       address: '15th Cross, Malleshwaram, Bengaluru',
@@ -658,7 +658,7 @@ test('TC24-TC26: Admin trainer approval, sport category CRUD, and user suspensio
     '/api/admin/users',
     {
       name: 'Unauthorized Owner',
-      email: 'unauth.owner@arena360.in',
+      email: 'unauth.owner@gmail.com',
       phone: '9845099881',
       password: 'Password@123',
       role: 'facility_owner',
@@ -672,7 +672,7 @@ test('TC24-TC26: Admin trainer approval, sport category CRUD, and user suspensio
     '/api/admin/users',
     {
       name: 'Rajeshwari Shetty',
-      email: 'rajeshwari.owner@arena360.in',
+      email: 'rajeshwari.owner@gmail.com',
       phone: '9845099882',
       password: 'Password@123',
       role: 'facility_owner',
@@ -689,7 +689,7 @@ test('TC24-TC26: Admin trainer approval, sport category CRUD, and user suspensio
     '/api/admin/users',
     {
       name: 'Siddharth Menon',
-      email: 'siddharth.coach@arena360.in',
+      email: 'siddharth.coach@gmail.com',
       phone: '9845099883',
       password: 'Password@123',
       role: 'trainer',
@@ -704,12 +704,12 @@ test('TC24-TC26: Admin trainer approval, sport category CRUD, and user suspensio
   assert.equal(adminCreateTrainer.data.user.role, 'trainer');
 
   // TC26: Suspend user -> login fails 403 -> restore user
-  const targetUser = admOv.data.users.find((u) => u.email === 'nikhil.test@arena360.in')!;
+  const targetUser = admOv.data.users.find((u) => u.email === 'nikhil.test@gmail.com')!;
   const susp = await reqJson('PATCH', `/api/admin/users/${targetUser.id}/status`, { is_active: false }, adminToken);
   assert.equal(susp.status, 200);
 
   const loginSusp = await reqJson('POST', '/api/auth/login', {
-    identifier: 'nikhil.test@arena360.in',
+    identifier: 'nikhil.test@gmail.com',
     password: 'NewPassword@456',
   });
   assert.equal(loginSusp.status, 403);
@@ -818,7 +818,7 @@ test('Lab FR1-FR15 Invalid Input & Edge-Case Verification', async () => {
 
   const badPhoneReg = await reqJson<{ error: string }>('POST', '/api/auth/register', {
     name: 'Riya Sharma',
-    email: 'riya.valid@arena360.in',
+    email: 'riya.valid@gmail.com',
     phone: '12345',
     password: 'Password@123',
   });
@@ -826,7 +826,7 @@ test('Lab FR1-FR15 Invalid Input & Edge-Case Verification', async () => {
 
   const shortPwReg = await reqJson<{ error: string }>('POST', '/api/auth/register', {
     name: 'Riya Sharma',
-    email: 'riya.valid@arena360.in',
+    email: 'riya.valid@gmail.com',
     phone: '9876543299',
     password: 'Pass12',
   });
@@ -845,7 +845,7 @@ test('Lab FR1-FR15 Invalid Input & Edge-Case Verification', async () => {
     '/api/profile',
     {
       name: 'Nikhil Sharma',
-      email: 'customer@arena360.in',
+      email: 'customer@gmail.com',
       phone: '9811122233',
       city: 'Bengaluru',
     },
@@ -858,7 +858,7 @@ test('Lab FR1-FR15 Invalid Input & Edge-Case Verification', async () => {
     '/api/profile',
     {
       name: 'N',
-      email: 'nikhil.test@arena360.in',
+      email: 'nikhil.test@gmail.com',
     },
     secondCustomerToken
   );
